@@ -7,33 +7,36 @@ env:
 
 jobs:
   build-anisette-server-x86_64:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
+    container: ubuntu:23.04
 
     steps:
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y software-properties-common
+          add-apt-repository ppa:ubuntu-toolchain-r/ppa
+          apt-get install -y git gdc-13 dub libz-dev elfutils
+
       - uses: actions/checkout@v3
         with:
           submodules: recursive
-
-      - name: Install dependencies
-        run: |
-          sudo add-apt-repository ppa:ubuntu-toolchain-r/ppa
-          sudo apt-get update && sudo apt-get install -y gdc-13 dub libz-dev elfutils
 
       - name: Build
         run: dub build :anisette-server -b release --compiler=gdc-13 -c "static"
 
       - name: Rename
-        run: mv "${{github.workspace}}/bin/provision_anisette-server" "${{github.workspace}}/bin/anisette-server-x86_64"
+        run: mv "bin/provision_anisette-server" "bin/anisette-server-x86_64"
 
       - name: Put debug symbols in a separate file
-        run: eu-strip --strip-debug -f "${{github.workspace}}/bin/anisette-server-x86_64.dbg" "${{github.workspace}}/bin/anisette-server-x86_64"
+        run: eu-strip --strip-debug -f "bin/anisette-server-x86_64.dbg" "bin/anisette-server-x86_64"
 
       - uses: actions/upload-artifact@v3
         with:
           name: anisette-server-x86_64
           path: |
-            ${{github.workspace}}/bin/anisette-server-x86_64
-            ${{github.workspace}}/bin/anisette-server-x86_64.dbg
+            bin/anisette-server-x86_64
+            bin/anisette-server-x86_64.dbg
 
   build-anisette-server-i686:
     runs-on: ubuntu-latest
